@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 import subprocess
 import time
 from pathlib import Path
@@ -19,7 +20,8 @@ class GitSync:
     def __init__(self, folder: Path) -> None:
         self.folder = Path(folder)
         self.every = float(os.environ.get("MINEGRID_SYNC_MINUTES") or 0) * 60
-        self.last = time.time()
+        # spread the five game jobs over the interval so they don't push at the same moment
+        self.last = time.time() - random.uniform(0, self.every)
 
     def _git(self, *args: str) -> int:
         return subprocess.run(["git", *args], capture_output=True, text=True, timeout=60).returncode
@@ -34,11 +36,11 @@ class GitSync:
                 return
             self._git("-c", "user.name=minegrid-agent", "-c", "user.email=actions@users.noreply.github.com",
                       "commit", "-q", "-m", f"chore(agent): {self.folder.name} state [skip ci]")
-            for _ in range(3):
+            for _ in range(8):
                 if self._git("pull", "-q", "--rebase") == 0 and self._git("push", "-q") == 0:
                     log.info("State pushed to GitHub")
                     return
-                time.sleep(5)
+                time.sleep(random.uniform(2, 15))
             log.warning("State push failed (will retry next interval)")
         except Exception as exc:
             log.warning("State push error: %s", exc)
