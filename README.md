@@ -76,8 +76,7 @@ python -m unittest discover -s tests
 1. دير repo جديد ف GitHub وطلع فيه هاد الفولدر.
 2. ف **Settings → Secrets → Actions** زيد `DISCORD_WEBHOOK_URL`. **ما تكتبوش ف الكود أبدا.**
    ومن الأحسن تزيد حتى `SOLANA_RPC_URL` (مثلا Helius) لـORE وGODL، حيت الـRPC العام كيحبس الطلبات بزاف.
-3. لـBidGrid: ف **Settings → Variables** زيد `BIDGRID_SBID_PRICE_SOL` (ثمن SBID بالـSOL).
-4. ف **Actions → MineGrid Agent 24/7** ضغط **Run workflow**.
+3. ف **Actions → MineGrid Agent 24/7** ضغط **Run workflow**.
 
 كل run كيدوم تقريبا 5 سوايع ونص، كيحفظ الحالة ف `data/`، ومن بعد كيطلق الـrun الجاي بوحدو.
 
@@ -89,7 +88,7 @@ python -m unittest discover -s tests
 |---|---|---|
 | `ELOSCAPE_MIN_STAKE` / `ELOSCAPE_MAX_STAKE` | 0.0025 / 0.05 HYPE | حدود الـstake |
 | `ELOSCAPE_TX_COST_HYPE` | 0.00002 | الـgas لكل رهان |
-| `BIDGRID_SBID_PRICE_SOL` | 0.00075 | ثمن SBID بالـSOL (ما كاينش API، عمرو بيدك) |
+| `BIDGRID_SBID_PRICE_SOL` | فارغ (DexScreener) | ثمن SBID بالـSOL. إلا خليتيه فارغ كيتجاب أوتوماتيكيا من DexScreener؛ إلا عمرتيه كيغلب على الثمن الأوتوماتيكي |
 | `BIDGRID_TOKENS_PER_ROUND` | 4 | SBID لكل round |
 | `BIDGRID_MIN_STAKE` / `BIDGRID_MAX_STAKE` | 0.005 / 0.03 SOL | حدود الـstake |
 | `BIDGRID_MOTHERLODE_PROB` | 0 | احتمال الـjackpot (0 = ما كنحسبوهش) |

@@ -9,6 +9,7 @@ import logging
 import time
 from pathlib import Path
 
+from . import migrations
 from .games import get_game
 from .gitsync import GitSync
 from .gridmath import reward_value
@@ -26,6 +27,10 @@ def run_agent(game_name: str, data_dir: Path, max_minutes: float, poll_seconds: 
     store = Store(data_dir, game_name)
     rounds = store.load_rounds()
     wallet, agent_state = store.load_state(start_native)
+    wallet, migrated = migrations.apply(game_name, rounds, wallet, agent_state, cfg)
+    if migrated:
+        store.save_rounds(rounds)
+        store.save_state(wallet, agent_state)
     notifier = Notifier()
     sync = GitSync(store.dir)
     last_signal = agent_state.get("last_signal")

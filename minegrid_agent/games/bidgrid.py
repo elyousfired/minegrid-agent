@@ -2,9 +2,8 @@
 BidGrid (Solana): 5x5 grid, bets in SOL, rewards in SBID.
 
 The public history API has no per-square stakes, so outcomes are approximated
-(others assumed spread evenly). The SBID price has no known API yet: set
-BIDGRID_SBID_PRICE_SOL. The default reproduces the 0.003 SOL reward value used
-by bidgrid-radar (4 SBID x 0.00075 SOL).
+(others assumed spread evenly). The SBID price comes live from DexScreener
+(most liquid SBID/SOL pair); BIDGRID_SBID_PRICE_SOL overrides it when set.
 """
 
 from __future__ import annotations
@@ -14,9 +13,11 @@ import os
 from ..gridmath import GameConfig
 from ..http import get_json
 from ..models import Round
+from ..pricing import dexscreener_price_native
 from .base import GameAdapter, MarketState
 
 HISTORY_URL = "https://bidgrid.win/api/history/rounds?limit=30"
+SBID_MINT = "9Vyqy9pt9b45mfUAcD32KV9pi3A7qYX9D3za4q6qDKMe"
 LAMPORTS = 1e9
 
 
@@ -68,5 +69,11 @@ class BidGridAdapter(GameAdapter):
         return out
 
     def fetch_market(self) -> MarketState:
-        price = float((os.environ.get("BIDGRID_SBID_PRICE_SOL") or "0.00075"))
-        return MarketState(token_price_native=price, motherlode_reserve=self._last_reserve or 0.0)
+        """SBID price in SOL: BIDGRID_SBID_PRICE_SOL if set (manual override), else live from DexScreener."""
+        override = os.environ.get("BIDGRID_SBID_PRICE_SOL")
+        if override:
+            price, native_usd = float(override), None
+        else:
+            price, native_usd = dexscreener_price_native(SBID_MINT, "SOL")  # raises -> no signal this loop
+        return MarketState(token_price_native=price, native_usd=native_usd,
+                           motherlode_reserve=self._last_reserve or 0.0)

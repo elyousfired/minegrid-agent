@@ -13,7 +13,18 @@ BASE_URL = "https://eloscape.com"
 WEI = 1e18
 
 
+def split_rewards(elo_total: float, motherlode: float) -> tuple[float, float]:
+    """
+    The API's eloRewardTotal already includes the motherlode (e.g. 50.6 = 1 + 49.6).
+    Return (emission without motherlode, motherlode) so the jackpot is counted once.
+    """
+    motherlode = max(0.0, motherlode)
+    return max(0.0, elo_total - motherlode), motherlode
+
+
 def parse_epoch(item: dict) -> Round:
+    emission, motherlode = split_rewards(int(item.get("eloRewardTotal") or 0) / WEI,
+                                         int(item.get("motherlodeAmount") or 0) / WEI)
     return Round(
         round_id=int(item["roundId"]),
         total_deployed=int(item.get("deployedTotal") or 0) / WEI,
@@ -21,13 +32,15 @@ def parse_epoch(item: dict) -> Round:
         end_time=int(item.get("endTime") or 0),
         winners_deployed=int(item.get("winnersDeployed") or 0) / WEI,
         payout_total=int(item.get("ethWinnings") or item.get("totalWinnings") or 0) / WEI,
-        token_reward=int(item.get("eloRewardTotal") or 0) / WEI,
-        motherlode_paid=int(item.get("motherlodeAmount") or 0) / WEI,
+        token_reward=emission,
+        motherlode_paid=motherlode,
     )
 
 
 def from_legacy_cache(row: dict) -> Round:
     """Convert a row of eloscape-quant-dashboard/data/epochs_cache.json."""
+    emission, motherlode = split_rewards(float(row.get("elo_reward_total") or 0.0),
+                                         float(row.get("motherlode_amount") or 0.0))
     return Round(
         round_id=int(row["round_id"]),
         total_deployed=float(row["deployed_total_hype"]),
@@ -35,8 +48,8 @@ def from_legacy_cache(row: dict) -> Round:
         end_time=int(row.get("end_time") or 0),
         winners_deployed=float(row.get("winners_deployed_hype") or 0.0),
         payout_total=float(row.get("eth_winnings_hype") or 0.0),
-        token_reward=float(row.get("elo_reward_total") or 0.0),
-        motherlode_paid=float(row.get("motherlode_amount") or 0.0),
+        token_reward=emission,
+        motherlode_paid=motherlode,
     )
 
 
