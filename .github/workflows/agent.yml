@@ -40,20 +40,7 @@ jobs:
 
       - name: Save state
         if: always()
-        run: |
-          git config user.name "minegrid-agent"
-          git config user.email "actions@users.noreply.github.com"
-          git add data/${{ matrix.game }}
-          if git diff --staged --quiet; then
-            echo "No state changes."
-            exit 0
-          fi
-          git commit -m "chore(agent): ${{ matrix.game }} state [skip ci]"
-          for i in 1 2 3 4 5 6 7 8; do
-            git pull --rebase && git push && exit 0
-            sleep $((RANDOM % 15 + 2))
-          done
-          echo "::error::could not push state"; exit 1
+        run: python -m minegrid_agent push-state --game ${{ matrix.game }}
 
   next-run:
     needs: agent

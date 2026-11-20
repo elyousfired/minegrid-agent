@@ -51,6 +51,9 @@ def main() -> None:
     dg = sub.add_parser("diagnose", help="print raw on-chain state of a Solana grid game")
     dg.add_argument("--game", choices=["ore", "godl"], required=True)
 
+    sp = sub.add_parser("push-state", help="commit and push data/<game> (used by the workflow)")
+    sp.add_argument("--game", required=True)
+
     imp = sub.add_parser("import-eloscape-cache", help="seed Eloscape history from the old dashboard cache")
     imp.add_argument("path", type=Path)
 
@@ -93,6 +96,11 @@ def main() -> None:
     elif args.cmd == "diagnose":
         from .diagnose import diagnose
         diagnose(args.game)
+
+    elif args.cmd == "push-state":
+        from .gitsync import GitSync
+        ok = GitSync(args.data_dir / args.game).push_folder()
+        raise SystemExit(0 if ok else 1)
 
     elif args.cmd == "import-eloscape-cache":
         from .games.eloscape import from_legacy_cache
