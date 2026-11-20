@@ -48,6 +48,9 @@ def main() -> None:
     st = sub.add_parser("status", help="print paper wallet summary")
     st.add_argument("--game", choices=ALL_GAMES, required=True)
 
+    dg = sub.add_parser("diagnose", help="print raw on-chain state of a Solana grid game")
+    dg.add_argument("--game", choices=["ore", "godl"], required=True)
+
     imp = sub.add_parser("import-eloscape-cache", help="seed Eloscape history from the old dashboard cache")
     imp.add_argument("path", type=Path)
 
@@ -86,6 +89,10 @@ def main() -> None:
         wallet, agent = Store(args.data_dir, args.game).load_state(1.0)
         price = agent.get("token_price_native", 0.0)
         print(json.dumps({"agent": agent, "wallet": wallet.summary(price, cfg)}, indent=2, ensure_ascii=False))
+
+    elif args.cmd == "diagnose":
+        from .diagnose import diagnose
+        diagnose(args.game)
 
     elif args.cmd == "import-eloscape-cache":
         from .games.eloscape import from_legacy_cache
