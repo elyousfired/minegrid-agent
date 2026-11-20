@@ -96,9 +96,7 @@ def simulate_outcome(rnd: Round, stake: float, cfg: GameConfig) -> Outcome:
 
     if cfg.exact_outcomes and rnd.winners_deployed is not None and rnd.payout_total is not None:
         new_w = rnd.winners_deployed + our_win
-        payout = (rnd.payout_total
-                  + (1 - cfg.admin_fee) * our_win
-                  + (1 - cfg.admin_fee) * (1 - cfg.loser_fee) * our_lose)
+        payout = rnd.payout_total + (1 - cfg.winner_fee) * our_win + (1 - cfg.loser_fee) * our_lose
         share = our_win / new_w
         return Outcome(share * payout, share * tokens_pool, True)
 

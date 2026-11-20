@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [eloscape, bidgrid]
+        game: [eloscape, bidgrid, ore, godl, glazecorp]
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +34,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           BIDGRID_SBID_PRICE_SOL: ${{ vars.BIDGRID_SBID_PRICE_SOL }}
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
         run: python -m minegrid_agent run --game ${{ matrix.game }} --max-minutes 325
 
       - name: Save state

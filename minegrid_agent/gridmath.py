@@ -28,8 +28,8 @@ class GameConfig:
     native_symbol: str
     token_symbol: str
     squares: int = 25
-    admin_fee: float = 0.01          # fee on every deployed unit
-    loser_fee: float = 0.10          # protocol fee on losing squares (after admin fee)
+    winner_fee: float = 0.01         # share of the winning square's stake kept by the protocol
+    loser_fee: float = 0.109         # share of losing squares' stakes kept by the protocol
     house_edge_override: Optional[float] = None
     claim_fee: float = 0.0           # fee when claiming token rewards
     sell_fee: float = 0.0            # DEX tax + pool fee when selling the token
@@ -45,17 +45,24 @@ class GameConfig:
         """Expected loss per unit staked evenly over all squares."""
         if self.house_edge_override is not None:
             return self.house_edge_override
-        lose_share = (self.squares - 1) / self.squares
-        return self.admin_fee + lose_share * (1.0 - self.admin_fee) * self.loser_fee
+        n = self.squares
+        return self.winner_fee / n + self.loser_fee * (n - 1) / n
 
     @property
     def token_net_factor(self) -> float:
         return (1.0 - self.claim_fee) * (1.0 - self.sell_fee)
 
 
-def reward_value(cfg: GameConfig, token_price_native: float, motherlode_reserve: float = 0.0) -> float:
+def ore_fees(admin: float, protocol: float) -> dict:
+    """ORE-style fees: `admin` on every square, then `protocol` on what is left of losing squares."""
+    return {"winner_fee": admin, "loser_fee": admin + (1.0 - admin) * protocol}
+
+
+def reward_value(cfg: GameConfig, token_price_native: float, motherlode_reserve: float = 0.0,
+                 tokens_per_round: float | None = None) -> float:
     """Net native value V of one round's token rewards (emission + expected jackpot)."""
-    expected_tokens = cfg.tokens_per_round + motherlode_reserve * cfg.motherlode_prob
+    per_round = cfg.tokens_per_round if tokens_per_round is None else tokens_per_round
+    expected_tokens = per_round + motherlode_reserve * cfg.motherlode_prob
     return expected_tokens * token_price_native * cfg.token_net_factor
 
 

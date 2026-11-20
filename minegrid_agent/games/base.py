@@ -13,6 +13,7 @@ class MarketState:
     native_usd: Optional[float] = None
     motherlode_reserve: float = 0.0    # current jackpot size in tokens
     live_round_id: Optional[int] = None
+    tokens_per_round: Optional[float] = None  # live override of the static config value
 
 
 class GameAdapter:

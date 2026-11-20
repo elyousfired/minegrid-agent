@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from ..gridmath import GameConfig
+from ..gridmath import GameConfig, ore_fees
 from ..http import get_json
 from ..models import Round
 from .base import GameAdapter, MarketState
@@ -45,8 +45,7 @@ class EloscapeAdapter(GameAdapter):
         name="eloscape",
         native_symbol="HYPE",
         token_symbol="ELO",
-        admin_fee=0.01,
-        loser_fee=0.10,
+        **ore_fees(admin=0.01, protocol=0.10),
         claim_fee=0.10,
         sell_fee=0.04,
         tokens_per_round=1.0,

@@ -42,7 +42,7 @@ def run_agent(game_name: str, data_dir: Path, max_minutes: float, poll_seconds: 
             if new:
                 market = game.fetch_market()
                 price = market.token_price_native
-                value = reward_value(cfg, price, market.motherlode_reserve)
+                value = reward_value(cfg, price, market.motherlode_reserve, market.tokens_per_round)
 
                 for r in new:
                     rounds.append(r)

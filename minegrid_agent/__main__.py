@@ -1,6 +1,7 @@
 """
 CLI:
   python -m minegrid_agent run      --game eloscape --max-minutes 330
+  python -m minegrid_agent run      --game glazecorp
   python -m minegrid_agent backtest --game eloscape --token-price 0.012
   python -m minegrid_agent status   --game eloscape
   python -m minegrid_agent import-eloscape-cache path/to/epochs_cache.json
@@ -19,6 +20,7 @@ from .storage import Store
 from .strategy import PREDICTORS, StrategyParams
 
 DEFAULT_DATA = Path(__file__).resolve().parent.parent / "data"
+ALL_GAMES = list(GAMES) + ["glazecorp"]
 
 
 def main() -> None:
@@ -27,7 +29,7 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     run = sub.add_parser("run", help="live agent (signals + paper trading)")
-    run.add_argument("--game", choices=list(GAMES), required=True)
+    run.add_argument("--game", choices=ALL_GAMES, required=True)
     run.add_argument("--max-minutes", type=float, default=330)
     run.add_argument("--poll", type=float, default=4.0)
     run.add_argument("--predictor", choices=PREDICTORS, default="scenario")
@@ -35,6 +37,7 @@ def main() -> None:
     run.add_argument("--margin", type=float, default=0.15)
     run.add_argument("--start-balance", type=float, default=1.0)
     run.add_argument("--summary-every", type=float, default=60.0, help="minutes")
+    run.add_argument("--max-entry-usd", type=float, default=5.0, help="glazecorp: max paper entry price")
 
     bt = sub.add_parser("backtest", help="walk-forward backtest on stored history")
     bt.add_argument("--game", choices=list(GAMES), required=True)
@@ -43,7 +46,7 @@ def main() -> None:
     bt.add_argument("--warmup", type=int, default=20)
 
     st = sub.add_parser("status", help="print paper wallet summary")
-    st.add_argument("--game", choices=list(GAMES), required=True)
+    st.add_argument("--game", choices=ALL_GAMES, required=True)
 
     imp = sub.add_parser("import-eloscape-cache", help="seed Eloscape history from the old dashboard cache")
     imp.add_argument("path", type=Path)
@@ -51,7 +54,12 @@ def main() -> None:
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    if args.cmd == "run":
+    if args.cmd == "run" and args.game == "glazecorp":
+        from .auction.agent import run_glazecorp_agent
+        start = args.start_balance if args.start_balance != 1.0 else 100.0
+        run_glazecorp_agent(args.data_dir, args.max_minutes, max(args.poll, 15.0), start, args.max_entry_usd)
+
+    elif args.cmd == "run":
         from .agent import run_agent
         params = StrategyParams(predictor=args.predictor, lookback=args.lookback, safety_margin=args.margin)
         run_agent(args.game, args.data_dir, args.max_minutes, args.poll, params,
@@ -66,6 +74,12 @@ def main() -> None:
               f"token price {args.token_price} {cfg.native_symbol}")
         for res in compare(rounds, cfg, args.token_price, args.warmup):
             print(res.row(cfg.native_symbol))
+
+    elif args.cmd == "status" and args.game == "glazecorp":
+        path = args.data_dir / "glazecorp" / "state.json"
+        st = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        print(json.dumps({k: st.get(k) for k in ("balance_usd", "pnl_usd", "entries")}
+                         | {"open_positions": len(st.get("positions", {}))}, indent=2))
 
     elif args.cmd == "status":
         cfg = get_game(args.game).config

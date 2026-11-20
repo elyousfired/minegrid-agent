@@ -3,6 +3,7 @@ import unittest
 
 from minegrid_agent.backtest import run_backtest
 from minegrid_agent.gridmath import (
+    ore_fees,
     GameConfig,
     breakeven_pool,
     expected_profit,
@@ -14,7 +15,7 @@ from minegrid_agent.models import Round
 from minegrid_agent.paper import PaperWallet
 from minegrid_agent.strategy import Decision, StrategyParams, decide, simulate_outcome
 
-ELO = GameConfig(name="t", native_symbol="H", token_symbol="T", admin_fee=0.01, loser_fee=0.10,
+ELO = GameConfig(name="t", native_symbol="H", token_symbol="T", **ore_fees(0.01, 0.10),
                  claim_fee=0.10, sell_fee=0.04, tokens_per_round=1.0, min_stake=0.001, max_stake=1.0)
 
 
