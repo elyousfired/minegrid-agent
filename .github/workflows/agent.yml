@@ -1,0 +1,63 @@
+name: MineGrid Agent 24/7
+
+# Each run lasts ~5h30, saves its state to data/, then starts the next run itself.
+# The schedule is only a safety net in case the chain breaks.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: minegrid-agent
+  cancel-in-progress: false
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        game: [eloscape, bidgrid]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run agent (signals + paper trading)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          BIDGRID_SBID_PRICE_SOL: ${{ vars.BIDGRID_SBID_PRICE_SOL }}
+        run: python -m minegrid_agent run --game ${{ matrix.game }} --max-minutes 325
+
+      - name: Save state
+        if: always()
+        run: |
+          git config user.name "minegrid-agent"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/${{ matrix.game }}
+          if git diff --staged --quiet; then
+            echo "No state changes."
+            exit 0
+          fi
+          git commit -m "chore(agent): ${{ matrix.game }} state [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase && git push && break
+            sleep 5
+          done
+
+  next-run:
+    needs: agent
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start the next run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run agent.yml --repo ${{ github.repository }} --ref ${{ github.ref_name }}
