@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 from .games import get_game
+from .gitsync import GitSync
 from .gridmath import reward_value
 from .notify import BLUE, GREEN, RED, Notifier, field
 from .storage import Store
@@ -26,6 +27,7 @@ def run_agent(game_name: str, data_dir: Path, max_minutes: float, poll_seconds: 
     rounds = store.load_rounds()
     wallet, agent_state = store.load_state(start_native)
     notifier = Notifier()
+    sync = GitSync(store.dir)
     last_signal = agent_state.get("last_signal")
     last_summary = time.time()
     deadline = time.time() + max_minutes * 60
@@ -72,6 +74,7 @@ def run_agent(game_name: str, data_dir: Path, max_minutes: float, poll_seconds: 
                                    updated=int(time.time()))
                 store.save_rounds(rounds)
                 store.save_state(wallet, agent_state)
+                sync.maybe_push()
 
             if time.time() - last_summary >= summary_every_min * 60:
                 _summary(notifier, cfg, wallet.summary(price, cfg))

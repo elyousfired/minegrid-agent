@@ -35,6 +35,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           BIDGRID_SBID_PRICE_SOL: ${{ vars.BIDGRID_SBID_PRICE_SOL }}
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+          MINEGRID_SYNC_MINUTES: "15"
         run: python -m minegrid_agent run --game ${{ matrix.game }} --max-minutes 325
 
       - name: Save state

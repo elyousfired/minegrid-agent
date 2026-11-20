@@ -10,6 +10,7 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
+from ..gitsync import GitSync
 from ..notify import BLUE, GREEN, Notifier, field
 from ..storage import _atomic_write
 from .glazecorp import fetch_slots
@@ -32,6 +33,7 @@ def run_glazecorp_agent(data_dir: Path, max_minutes: float, poll_seconds: float,
     path = Path(data_dir) / "glazecorp" / "state.json"
     st = _load(path, start_usd)
     notifier = Notifier()
+    sync = GitSync(path.parent)
     deadline = time.time() + max_minutes * 60
     log.info("GlazeCorp agent started: balance $%.2f, %d open positions", st["balance_usd"], len(st["positions"]))
 
@@ -78,6 +80,7 @@ def run_glazecorp_agent(data_dir: Path, max_minutes: float, poll_seconds: float,
                         [field("Epoch", str(s.epoch)), field("TPS", f"{s.tps:.4f}")],
                     )
             _atomic_write(path, st)
+            sync.maybe_push()
         except Exception as exc:
             log.warning("Loop error: %s", exc)
         time.sleep(poll_seconds)
