@@ -6,6 +6,9 @@ on:
       program:
         description: Program id
         required: true
+      split:
+        description: Unix time to compare instructions before/after (optional)
+        required: false
 
 jobs:
   audit:
@@ -18,4 +21,4 @@ jobs:
           python-version: "3.12"
       - env:
           SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
-        run: python -m minegrid_agent.program_audit "${{ inputs.program }}"
+        run: python -m minegrid_agent.program_audit "${{ inputs.program }}" && if [ -n "${{ inputs.split }}" ]; then python -m minegrid_agent.ix_compare "${{ inputs.program }}" "${{ inputs.split }}"; fi
