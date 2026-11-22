@@ -45,7 +45,7 @@ class BidGridAdapter(GameAdapter):
         tokens_per_round=float((os.environ.get("BIDGRID_TOKENS_PER_ROUND") or "4")),
         motherlode_prob=float((os.environ.get("BIDGRID_MOTHERLODE_PROB") or "0")),
         tx_cost_native=float((os.environ.get("BIDGRID_TX_COST_SOL") or "0.00001")),
-        min_stake=float((os.environ.get("BIDGRID_MIN_STAKE") or "0.005")),
+        min_stake=float((os.environ.get("BIDGRID_MIN_STAKE") or "0.01")),  # raised by the 2026-11-22 upgrade
         max_stake=float((os.environ.get("BIDGRID_MAX_STAKE") or "0.03")),
         exact_outcomes=False,
     )

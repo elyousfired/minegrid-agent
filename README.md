@@ -90,7 +90,7 @@ python -m unittest discover -s tests
 | `ELOSCAPE_TX_COST_HYPE` | 0.00002 | الـgas لكل رهان |
 | `BIDGRID_SBID_PRICE_SOL` | فارغ (DexScreener) | ثمن SBID بالـSOL. إلا خليتيه فارغ كيتجاب أوتوماتيكيا من DexScreener؛ إلا عمرتيه كيغلب على الثمن الأوتوماتيكي |
 | `BIDGRID_TOKENS_PER_ROUND` | 4 | SBID لكل round |
-| `BIDGRID_MIN_STAKE` / `BIDGRID_MAX_STAKE` | 0.005 / 0.03 SOL | حدود الـstake |
+| `BIDGRID_MIN_STAKE` / `BIDGRID_MAX_STAKE` | 0.01 / 0.03 SOL | حدود الـstake |
 | `BIDGRID_MOTHERLODE_PROB` | 0 | احتمال الـjackpot (0 = ما كنحسبوهش) |
 | `SOLANA_RPC_URL` | RPC العام | الـRPC ديال Solana لـORE وGODL |
 | `ORE_MIN_STAKE` / `ORE_MAX_STAKE` | 0.005 / 0.25 SOL | حدود الـstake |
