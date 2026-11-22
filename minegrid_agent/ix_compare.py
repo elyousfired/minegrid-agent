@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import collections
 import sys
+import time
 from datetime import datetime, timezone
 
 from .solana import SolanaRPC, b58decode
@@ -30,16 +31,28 @@ def main(program: str, split: int) -> None:
             break
         sigs += page
         before = page[-1]["signature"]
-        if (page[-1].get("blockTime") or 0) < split - 6 * 3600 or len(sigs) > 6000:
+        if (page[-1].get("blockTime") or 0) < split - 3600 or len(sigs) > 15000:
             break
+    errs = collections.Counter(str(x.get("err")) for x in sigs if x.get("err"))
+    print("errors in signatures:", dict(errs.most_common(6)))
+    failed = [x for x in sigs if x.get("err")]
     after = [s for s in sigs if (s.get("blockTime") or 0) >= split and not s.get("err")]
     prior = [s for s in sigs if (s.get("blockTime") or 0) < split and not s.get("err")]
     print(f"{len(sigs)} signatures, {len(prior)} ok before, {len(after)} ok after; "
           f"oldest {ts(sigs[-1].get('blockTime'))}")
-    for label, group in (("BEFORE", prior[:25]), ("AFTER", after[-25:])):
+    def get_tx(sig):
+        for i in range(5):
+            try:
+                time.sleep(1.2)
+                return rpc._call("getTransaction", [sig, {"encoding": "json", "maxSupportedTransactionVersion": 0}])
+            except Exception:
+                time.sleep(5 * (i + 1))
+        return None
+
+    for label, group in (("BEFORE", prior[:10]), ("AFTER ok", after[-10:]), ("FAILED", failed[:12])):
         names, shapes, signers = collections.Counter(), collections.Counter(), collections.Counter()
         for s in group:
-            tx = rpc._call("getTransaction", [s["signature"], {"encoding": "json", "maxSupportedTransactionVersion": 0}])
+            tx = get_tx(s["signature"])
             if not tx:
                 continue
             msg = tx["transaction"]["message"]
@@ -54,8 +67,8 @@ def main(program: str, split: int) -> None:
                 if "Instruction:" in line:
                     names[line.split("Instruction:")[1].strip()] += 1
             pre, post = tx["meta"]["preBalances"], tx["meta"]["postBalances"]
-            if label == "AFTER" and len(group) and s is group[-1]:
-                print("  last tx logs:", [l[:120] for l in (tx["meta"].get("logMessages") or [])][:15])
+            if s is group[0] and label != "BEFORE":
+                print(f"  {label} sample logs:", [l[:140] for l in (tx["meta"].get("logMessages") or [])][:14])
         print(f"\n== {label} ({len(group)} txs, {ts(group[0].get('blockTime')) if group else '-'}..)")
         print("  instruction names:", dict(names))
         print("  (discriminator, data len, n accounts):", dict(shapes))
