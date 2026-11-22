@@ -1,0 +1,21 @@
+name: Audit Solana program
+
+on:
+  workflow_dispatch:
+    inputs:
+      program:
+        description: Program id
+        required: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - env:
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+        run: python -m minegrid_agent.program_audit "${{ inputs.program }}"
